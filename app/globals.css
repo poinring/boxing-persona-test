@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* 1. 색상 변수 설정 */
+:root {
+  --background: #050505; /* 배경을 블랙으로 고정 */
+  --foreground: #ffffff;
+  
+  /* 더 파이팅 브랜딩 폰트 연결 */
+  --font-ui: var(--font-geist-sans);
+  --font-title: var(--font-geist-sans); /* 제목용 */
+  --font-dialogue: var(--font-geist-sans); /* 대사용 */
+}
+
+/* 2. v4 스타일의 테마 설정 (여기가 조종석입니다) */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  
+  /* 애니메이션 추가 */
+  --animate-shake: shake 0.15s ease-in-out infinite;
+  --animate-bounce-slow: bounce 3s infinite;
+  
+  /* 흔들림(Shake) 효과 실제 동작 정의 */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px) rotate(-1deg); }
+    75% { transform: translateX(4px) rotate(1deg); }
+  }
+}
+
+/* 3. 기본 바디 스타일 */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ui), system-ui, sans-serif;
+  margin: 0;
+}
+
+/* 4. 폰트 클래스 (HTML에서 font-title 식으로 사용) */
+.font-ui {
+  font-family: var(--font-ui), sans-serif;
+}
+
+.font-title {
+  font-family: var(--font-title), sans-serif;
+  font-weight: 300; /* 제목은 무조건 굵게 */
+}
+
+.font-dialogue {
+  font-family: var(--font-dialogue), serif;
+  font-weight: 300;
+}
+
+/* 5. 추가 애니메이션 (shimmer, float) */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}

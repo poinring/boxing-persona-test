@@ -1,11 +1,11 @@
-Q_ID,Tag_KR,Question_KR (상황 중심),Option_A (본능/공격/열정),Option_B (전략/기술/냉정),Score_Logic,Question_EN (Scenario-based),Option_A (Instinct/Agg/Passion),Option_B (Strategy/Tech/Logic)
-1,[ROUND 1],인생 첫 무대에 오르기 직전! 링 위 조명이 나를 비춘다면?,"""드디어 내 세상이다!"" 근거 없는 자신감 폭발","""실수하면 안 돼."" 머릿속 시뮬레이션 무한 반복",A: Agg+1 / B: Tech+1,Your first big stage! The spotlight hits you. How do you feel?,"""My time is now!"" Bursting with confidence.","""Don't mess up."" Simulating every move in my head."
-2,[ROUND 2],누군가 내 실력을 '무근본'이라며 비난한다! 나의 반응은?,"""뭐라고?"" 그 자리에서 뜨거운 맛을 보여준다","(무시) ""짖어라.."" 거리 두며 복수할 기회를 본다",A: Agg+1 / B: Tech+1,"Someone calls your skills ""trash."" What's your immediate reaction?","""What did you say?"" Show them what I've got.","(Ignore) ""Keep barking."" Wait for the perfect revenge."
-3,[ROUND 3],게임 캐릭터를 고른다면? 성능보다는 역시 '간지'가 중요하지!,한 방에 끝내는 핵펀치 폭주기관차,안 맞고 때리는 얄미운 컨트롤 장인,A: Agg+1 / B: Tech+1,"Picking a game character? It's all about the ""cool factor""!","A powerful ""Juggernaut"" that crushes everything.","A ""Control Master"" who hits without getting hit."
-4,[ROUND 4],체력이 바닥난 마감 직전! 나를 움직이게 하는 원동력은?,"""여기서 지면 끝이다!"" 타오르는 승부욕과 오기","""연습한 대로만 가자."" 나 자신에 대한 냉정한 신뢰",A: Agg+1 / B: Men+1,At your physical limit right before a deadline! What moves you?,"""Losing is not an option!"" Burning competitive spirit.","""Just do as practiced."" Cold self-trust in my prep."
-5,[ROUND 5],좁은 골목에서 험악한 사람과 눈이 마주쳤다! 피할 것인가?,"""어디 한 번..."" 눈 피하지 않고 당당하게 직진",괜히 힘 빼지 말자. 슬쩍 비켜가며 마찰 차단,A: Agg+1 / B: Tech+1,You meet a tough guy in a dark alley. What's your move?,"""Bring it on..."" Walk straight without breaking eye contact.",Why waste energy? Slide past and avoid friction.
-6,[ROUND 6],"친구가 ""일단 해봐!""라며 무모한 도전을 제안한다면?","""오히려 좋아!"" 일단 부딪히며 몸으로 배운다","""잠깐만.."" 리스크부터 분석하고 계획을 짠다",A: Agg+1 / B: Tech+1,"A friend suggests a reckless challenge. ""Just do it!""","""I'm in! Let's go!"" Learn by doing on the spot.","""Hold on.."" Analyze risks and make a plan first."
-7,[ROUND 7],모두가 안 된다는 '불가능한 프로젝트'를 맡게 되었다!,"""내가 된다는 걸 보여주지!"" 이 악물고 버틴다","""안 되는 건 안 되는 것."" 효율적인 우회로 탐색",A: Men+1 / B: Tech+1,"Assigned an ""Impossible Project"" that everyone says will fail.","""I'll prove them wrong!"" Grit my teeth and endure.","""If it's no, it's no."" Find an efficient pivot."
-8,[ROUND 8],친구와 가위바위보 승부! 오늘 간식비가 걸려있다면?,무조건 주먹! 내 '기개'로 기선을 제압한다,상대의 습관을 파악해 이길 확률을 계산한다,A: Agg+1 / B: Tech+1,Rock-Paper-Scissors with a friend! Winner gets free snacks!,"Mostly Rock! Overpower them with my ""Spirit.""",Observe their habits and calculate the probability.
-9,[ROUND 9],가장 짜릿한 성취감을 느낄 때는 언제인가요?,모든 걸 쏟아부어 하얗게 불태웠을 때,내 계획과 계산이 소름 돋게 딱딱 맞았을 때,A: Men+1 / B: Tech+1,When do you feel the most electric sense of achievement?,When I've poured everything out and burned bright.,When my plan and calculations hit perfectly.
-10,[FINAL],힘든 하루를 마치고 거울 속 나에게 날리는 한 마디는?,"""오늘도 뜨겁게 잘 싸웠다! 만족해!""","""내일은 오늘보다 더 효율적으로 꿀 빨아야지(?)""",A: Men+1 / B: Tech+1,"After a long day, what do you say to yourself in the mirror?","""I fought hard today. I'm satisfied!""","""Tomorrow, I should live more efficiently."""
+id,tag_kr,question_kr,option_a_kr,option_b_kr,agg_a,tech_a,men_a,agg_b,tech_b,men_b
+1,[ROUND 1],인생 첫 무대에 오르기 직전! 링 위 조명이 나를 비춘다면?,"드디어 내 세상이다! 근거 없는 자신감 폭발","실수하면 안 돼. 머릿속 시뮬레이션 무한 반복",1,0,0,0,1,0
+2,[ROUND 2],누군가 내 실력을 '무근본'이라며 비난한다! 나의 반응은?,"뭐라고? 그 자리에서 뜨거운 맛을 보여준다","(무시) 짖어라.. 거리 두며 복수할 기회를 본다",1,0,0,0,1,0
+3,[ROUND 3],게임 캐릭터를 고른다면? 성능보다는 역시 '간지'가 중요하지!,"한 방에 끝내는 핵펀치 폭주기관차","안 맞고 때리는 얄미운 컨트롤 장인",1,0,0,0,1,0
+4,[ROUND 4],체력이 바닥난 마감 직전! 나를 움직이게 하는 원동력은?,"여기서 지면 끝이다! 타오르는 승부욕과 오기","연습한 대로만 가자. 나 자신에 대한 냉정한 신뢰",1,0,0,0,0,1
+5,[ROUND 5],좁은 골목에서 험악한 사람과 눈이 마주쳤다! 피할 것인가?,"어디 한 번... 눈 피하지 않고 당당하게 직진","괜히 힘 빼지 말자. 슬쩍 비켜가며 마찰 차단",1,0,0,0,1,0
+6,[ROUND 6],친구가 일단 해봐!라며 무모한 도전을 제안한다면?,"오히려 좋아! 일단 부딪히며 몸으로 배운다","잠깐만.. 리스크부터 분석하고 계획을 짠다",1,0,0,0,1,0
+7,[ROUND 7],모두가 안 된다는 불가능한 프로젝트를 맡게 되었다!,"내가 된다는 걸 보여주지! 이 악물고 버틴다","안 되는 건 안 되는 것. 효율적인 우회로 탐색",0,0,1,0,1,0
+8,[ROUND 8],친구와 가위바위보 승부! 오늘 간식비가 걸려있다면?,"무조건 주먹! 내 기개로 기선을 제압한다","상대의 습관을 파악해 이길 확률을 계산한다",1,0,0,0,1,0
+9,[ROUND 9],가장 짜릿한 성취감을 느낄 때는 언제인가요?,"모든 걸 쏟아부어 하얗게 불태웠을 때","내 계획과 계산이 소름 돋게 딱딱 맞았을 때",0,0,1,0,1,0
+10,[FINAL],힘든 하루를 마치고 거울 속 나에게 날리는 한 마디는?,"오늘도 뜨겁게 잘 싸웠다! 만족해!","내일은 오늘보다 더 효율적으로 꿀 빨아야지(?)",0,0,1,0,1,0
