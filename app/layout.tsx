@@ -36,11 +36,11 @@ export const metadata = {
   title: '어이, 링 위로 올라와! | 복싱 성향 테스트',
   description: '링 위에 자리 하나 남는데 네 재능이나 좀 보고 가자고.',
   openGraph: {
-    title: '어이, 주먹은 폼이냐?| 복싱 성향 테스트',
-    description: '10초만 링 위로 올라와봐라. 네놈 재능 좀 보게.',
+    title: '더파이팅 복싱 성향 테스트',
+    description: '어이, 주먹은 폼이냐? 10초만 링 위로 올라와봐라. 네놈 재능 좀 보게.',
     images: [
       {
-        url: '/images/char_og_2.png', // 업로드하신 이미지 파일명 확인 필수!
+        url: 'public/images/characters/char_og_2.png', // 업로드하신 이미지 파일명 확인 필수!
         width: 1200,
         height: 630,
         alt: '카모가와 관장님의 복싱 성향 테스트',
