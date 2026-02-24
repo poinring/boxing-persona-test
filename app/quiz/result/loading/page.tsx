@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 
 const LOADING_MESSAGES = [
   "네 놈의 주먹 무게를 측정하는 중...",
-  "기술적인 정교함을 분석하고 있다.", // Tech 테마
-  "무너지지 않는 멘탈의 소유자인가?",   // Men 테마
-  "야생의 본능이 느껴지는구먼...",      // Agg 테마
+  "기술적인 정교함을 분석하고 있다.", 
+  "무너지지 않는 멘탈의 소유자인가?",   
+  "야생의 본능이 느껴지는구먼...",      
   "관장님이 너를 노려보고 있다..."
 ];
 
@@ -16,16 +16,25 @@ export default function ResultLoading() {
   const [currentMsg, setCurrentMsg] = useState(LOADING_MESSAGES[0]);
 
   useEffect(() => {
-    // 메시지 셔플
+    // 1. 메시지 셔플 로직 (기존 유지)
     const interval = setInterval(() => {
       const randomMsg = LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)];
       setCurrentMsg(randomMsg);
     }, 800);
 
-    // 결과 페이지로 이동
-    const search = window.location.search;
+    // 2. URL에서 전달받은 id와 s(점수) 추출
+    const searchParams = new URLSearchParams(window.location.search);
+    const id = searchParams.get("id");
+    const s = searchParams.get("s");
+
+    // 3. 결과 페이지로 이동 (변경된 구조 적용)
     const timer = setTimeout(() => {
-      router.replace(`/quiz/result${search}`);
+      // 만약 데이터가 없다면 메인으로, 있다면 캐릭터 전용 결과 페이지로!
+      if (id && s) {
+        router.replace(`/quiz/result/${id}?s=${s}`);
+      } else {
+        router.replace('/');
+      }
     }, 3000);
 
     return () => {
@@ -37,17 +46,14 @@ export default function ResultLoading() {
   return (
     <main className="min-h-screen w-full bg-[#050505] flex flex-col items-center justify-center px-6 relative overflow-hidden">
       
-      {/* BACKGROUND DECOR: 만화적 속도선 효과 */}
+      {/* --- 기존 디자인 및 애니메이션 (절대 수정 없음) --- */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000_70%)] z-10" />
         <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30" />
       </div>
 
       <div className="flex flex-col items-center z-20">
-        
-        {/* ANIMATION: 샌드백 타격 연출 */}
         <div className="relative mb-16">
-          {/* 타격 이펙트 (뒤쪽 불꽃) */}
           <motion.div 
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
             transition={{ duration: 0.2, repeat: Infinity }}
@@ -55,7 +61,6 @@ export default function ResultLoading() {
           />
           
           <div className="relative flex items-center justify-center">
-             {/* 샌드백 아이콘 대용: 복싱 글러브 혹은 강렬한 원형 */}
             <motion.div
               animate={{ 
                 x: [-2, 2, -2, 2, 0],
@@ -67,7 +72,6 @@ export default function ResultLoading() {
               <span className="font-title text-4xl text-red-600 italic">HIT</span>
             </motion.div>
 
-            {/* 사방으로 튀는 불꽃선 (만화적 연출) */}
             {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => (
               <motion.div
                 key={i}
@@ -80,7 +84,6 @@ export default function ResultLoading() {
           </div>
         </div>
 
-        {/* LOADING TEXT: 서사적 문구 */}
         <div className="text-center">
           <motion.div
             initial={{ opacity: 0 }}
@@ -103,7 +106,6 @@ export default function ResultLoading() {
           </div>
         </div>
 
-        {/* PROGRESS BAR: 링 로프 스타일 */}
         <div className="mt-12 w-64 h-1 bg-white/10 relative overflow-hidden rounded-full">
           <motion.div 
             initial={{ x: "-100%" }}
@@ -116,10 +118,7 @@ export default function ResultLoading() {
         <div className="mt-6 font-title text-red-600 text-sm tracking-widest animate-pulse italic">
           JUDGING...
         </div>
-
       </div>
-
-      {/* FOOTER: 만화적 하단 바 */}
       <div className="absolute bottom-0 w-full h-1 bg-gradient-to-r from-blue-600 via-white to-red-600" />
     </main>
   );

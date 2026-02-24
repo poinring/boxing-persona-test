@@ -1,29 +1,31 @@
 "use client";
 
-import React, { useMemo, useEffect } from "react"; // [추가] useEffect
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function ResultClient({
+  id,
+  scoreStr,
   characters
 }: {
+  id: string;
+  scoreStr: string;
   characters: any[];
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // 1. URL에서 score 데이터를 가져와 파싱합니다.
+  // 1. [변경] 짧은 문자열(253)에서 점수를 복원합니다.
   const score = useMemo(() => {
-    const scoreParam = searchParams.get("score");
-    if (scoreParam) {
-      try {
-        return JSON.parse(decodeURIComponent(scoreParam));
-      } catch (e) {
-        console.error("Score parsing error:", e);
-      }
+    if (scoreStr && scoreStr.length === 3) {
+      return {
+        agg: parseInt(scoreStr[0]),
+        tech: parseInt(scoreStr[1]),
+        men: parseInt(scoreStr[2])
+      };
     }
     return { agg: 0, tech: 0, men: 0 };
-  }, [searchParams]);
+  }, [scoreStr]);
 
   const { agg, tech, men } = score;
   
@@ -32,58 +34,36 @@ export default function ResultClient({
   const percentTech = Math.min(Math.round((tech / totalQuestions) * 100), 100);
   const percentMen = Math.min(Math.round((men / totalQuestions) * 100), 100);
 
-  // 2. 캐릭터 매칭 로직
+  // 2. [변경] URL에 포함된 id로 캐릭터를 즉시 찾습니다. (계산은 이미 끝났으니까요!)
   const character = useMemo(() => {
-    if (!characters.length) return null;
-    
-    const getDistance = (c: any) => {
-      return Math.sqrt(
-        Math.pow(Number(c.agg) - agg, 2) +
-        Math.pow(Number(c.tech) - tech, 2) +
-        Math.pow(Number(c.men) - men, 2)
-      );
-    };
+    return characters.find(c => String(c.id) === String(id)) || null;
+  }, [characters, id]);
 
-    let closest = characters[0];
-    let minDistance = getDistance(closest);
-
-    characters.forEach((c) => {
-      const dist = getDistance(c);
-      if (dist < minDistance) {
-        closest = c;
-        minDistance = dist;
-      }
-    });
-    return closest;
-  }, [characters, agg, tech, men]);
-
-  // [수집 1] 어떤 캐릭터가 결과로 나왔는지 수집 (전환 지표)
+  // [수집 1] GA4 수집 (기존 유지)
   useEffect(() => {
     if (character) {
       const windowObj = window as any;
       windowObj.dataLayer = windowObj.dataLayer || [];
       windowObj.dataLayer.push({
-        event: 'quiz_finish',            // 이벤트명: 퀴즈 완료
-        character_id: character.id,      // 캐릭터 ID
-        character_name: character.name_short_kr, // 캐릭터 이름
-        final_score: score               // 최종 스탯 점수
+        event: 'quiz_finish',
+        character_id: character.id,
+        character_name: character.name_short_kr,
+        final_score: score
       });
     }
   }, [character, score]);
 
-  // [수집 2] 공유 버튼 클릭 수집 (확산 지표)
+  // [수집 2] 공유 버튼 (기존 유지)
   const handleShare = () => {
-    // 1. 클립보드 복사 로직
     navigator.clipboard.writeText(window.location.href);
     alert("공유 링크가 복사되었습니다! 🥊");
 
-    // 2. 데이터 전송
     const windowObj = window as any;
     windowObj.dataLayer = windowObj.dataLayer || [];
     windowObj.dataLayer.push({
-      event: 'share_click',              // 이벤트명: 공유 클릭
-      share_method: 'copy_link',         // 공유 방식
-      character_name: character?.name_short_kr // 어떤 캐릭터 결과에서 공유했는지
+      event: 'share_click',
+      share_method: 'copy_link',
+      character_name: character?.name_short_kr
     });
   };
 
@@ -106,8 +86,7 @@ export default function ResultClient({
 
   return (
     <main className="min-h-screen bg-[#050505] text-white px-6 py-16 flex flex-col items-center overflow-x-hidden font-ui">
-      
-      {/* 1. 메인 판정 섹션 */}
+      {/* --- 기존 모든 디자인 코드 그대로 유지 --- */}
       <section className="flex flex-col items-center text-center mb-24 w-full">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -148,13 +127,12 @@ export default function ResultClient({
         </div>
       </section>
 
-      {/* 2. 주먹의 성질 분석 (기존 유지) */}
+      {/* 2. 주먹의 성질 분석 */}
       <section className="w-full max-w-md mb-24 group">
         <div className="flex items-baseline gap-2 mb-6">
           <span className="font-title text-red-600 text-sm italic font-black uppercase">제1보</span>
           <h2 className="font-title text-2xl text-white italic tracking-tighter uppercase">주먹의 성질</h2>
         </div>
-
         <div className="mb-4 flex items-center gap-3 bg-red-600/10 border border-red-600/30 p-3 italic">
             <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 font-black uppercase skew-x-[-15deg]">Strong Point</span>
             <span className="text-white font-black text-sm tracking-tighter">
@@ -163,7 +141,6 @@ export default function ResultClient({
             {percentMen > percentAgg && percentMen > percentTech && "꺾이지 않는 강철 멘탈"}
             </span>
         </div>
-
         <div className="space-y-8 bg-zinc-900/40 p-8 border-y-2 border-red-600/30">
           {[
             { name: "파괴력 (AGG)", value: percentAgg, color: "from-red-600 to-orange-500", labelColor: "text-orange-500" },
@@ -172,20 +149,11 @@ export default function ResultClient({
           ].map((stat, i) => (
             <div key={i} className="group/stat">
               <div className="flex justify-between items-end mb-3">
-                <span className="font-black text-sm italic tracking-widest text-white/70 group-hover/stat:text-white transition-colors">
-                    {stat.name}
-                </span>
-                <span className={`font-title text-2xl italic leading-none ${stat.labelColor}`}>
-                    {stat.value}%
-                </span>
+                <span className="font-black text-sm italic tracking-widest text-white/70 group-hover/stat:text-white transition-colors">{stat.name}</span>
+                <span className={`font-title text-2xl italic leading-none ${stat.labelColor}`}>{stat.value}%</span>
               </div>
               <div className="w-full h-4 bg-black border border-white/10 p-[2px] overflow-hidden">
-                <motion.div 
-                    initial={{ width: 0 }} 
-                    animate={{ width: `${stat.value}%` }} 
-                    transition={{ duration: 1.2, ease: "easeOut" }}
-                    className={`h-full bg-gradient-to-r ${stat.color} relative`}
-                >
+                <motion.div initial={{ width: 0 }} animate={{ width: `${stat.value}%` }} transition={{ duration: 1.2 }} className={`h-full bg-gradient-to-r ${stat.color} relative`}>
                   <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
                 </motion.div>
               </div>
@@ -194,7 +162,7 @@ export default function ResultClient({
         </div>
       </section>
 
-      {/* 3. 압천의 일침 (기존 유지) */}
+      {/* 3. 압천의 일침 */}
       <section className="w-full max-w-md mb-24 flex flex-col items-center">
         <div className="flex items-baseline gap-2 mb-6 w-full">
           <span className="font-title text-red-600 text-sm italic font-black">제2보</span>
@@ -203,17 +171,13 @@ export default function ResultClient({
         <div className="w-full flex flex-col items-center group">
           <img src="/images/characters/coach_2.png" className="w-full h-auto object-contain z-10 mb-[-20px]" alt="coach" />
           <div className="bg-white text-black p-6 sm:p-8 rounded-sm border-4 border-black shadow-[10px_10px_0_rgba(220,38,38,0.5)] z-20 w-full relative">
-            <p className="font-dialogue text-xl sm:text-2xl font-black italic leading-tight mb-4 break-keep">
-              {character.coach_comment_kr}
-            </p>
-            <p className="text-sm sm:text-base font-bold text-zinc-600 leading-relaxed border-t-2 border-black/5 pt-4 break-keep">
-              {character.coach_analysis_kr}
-            </p>
+            <p className="font-dialogue text-xl sm:text-2xl font-black italic leading-tight mb-4 break-keep">{character.coach_comment_kr}</p>
+            <p className="text-sm sm:text-base font-bold text-zinc-600 leading-relaxed border-t-2 border-black/5 pt-4 break-keep">{character.coach_analysis_kr}</p>
           </div>
         </div>
       </section>
 
-      {/* 4. 필살기 및 상성 (기존 유지) */}
+      {/* 4. 필살기 및 상성 */}
       <section className="w-full max-w-md mb-24">
         <div className="flex items-baseline gap-2 mb-6">
           <span className="font-title text-red-600 text-sm italic font-black">제3보</span>
@@ -224,9 +188,7 @@ export default function ResultClient({
             <h3 className="font-title text-4xl text-red-500 mb-4 italic tracking-tighter">
               <SafeItalicTitle className="">{character.signature_move}</SafeItalicTitle>
             </h3>
-            <p className="text-white/80 text-sm leading-relaxed font-bold break-keep">
-              {character.move_description_kr}
-            </p>
+            <p className="text-white/80 text-sm leading-relaxed font-bold break-keep">{character.move_description_kr}</p>
           </div>
         </div>
       </section>
@@ -239,45 +201,32 @@ export default function ResultClient({
         {bestMatch && (
           <div className="bg-blue-900/10 border-l-4 border-blue-500 p-5 flex items-center gap-5">
             <div className="w-16 h-16 rounded-full border-2 border-blue-500 bg-zinc-800 overflow-hidden">
-               <img src={`/images/characters/char_${String(bestMatch.id).padStart(2,"0")}.png`} className="w-full h-full object-cover" />
+               <img src={`/images/characters/char_${String(bestMatch.id).padStart(2,"0")}.png`} className="w-full h-full object-cover" alt="" />
             </div>
-            <div>
-              <p className="text-[10px] text-blue-400 font-black tracking-widest uppercase mb-1">Best Partner</p>
-              <p className="font-black text-xl italic">{bestMatch.name_full_kr}</p>
-            </div>
+            <div><p className="text-[10px] text-blue-400 font-black tracking-widest uppercase mb-1">Best Partner</p><p className="font-black text-xl italic">{bestMatch.name_full_kr}</p></div>
           </div>
         )}
         {worstMatch && (
           <div className="bg-red-900/10 border-l-4 border-red-600 p-5 flex items-center gap-5">
             <div className="w-16 h-16 rounded-full border-2 border-red-600 bg-zinc-800 overflow-hidden">
-               <img src={`/images/characters/char_${String(worstMatch.id).padStart(2,"0")}.png`} className="w-full h-full object-cover" />
+               <img src={`/images/characters/char_${String(worstMatch.id).padStart(2,"0")}.png`} className="w-full h-full object-cover" alt="" />
             </div>
-            <div>
-              <p className="text-[10px] text-red-500 font-black tracking-widest uppercase mb-1">Fatal Rival</p>
-              <p className="font-black text-xl italic">{worstMatch.name_full_kr}</p>
-            </div>
+            <div><p className="text-[10px] text-red-500 font-black tracking-widest uppercase mb-1">Fatal Rival</p><p className="font-black text-xl italic">{worstMatch.name_full_kr}</p></div>
           </div>
         )}
       </section>
 
-      {/* 5. CTA 버튼 (수집 로직 적용) */}
+      {/* 5. CTA 버튼 */}
       <div className="w-full max-w-md mt-10 space-y-4">
-        <button 
-          onClick={handleShare} // 수정: handleShare 함수 호출
-          className="w-full py-6 bg-red-600 text-white font-title text-3xl italic border-b-8 border-red-900"
-        >
+        <button onClick={handleShare} className="w-full py-6 bg-red-600 text-white font-title text-3xl italic border-b-8 border-red-900">
           <SafeItalicTitle className="">결과 공유하기</SafeItalicTitle>
         </button>
-        <button 
-          onClick={() => {
-            // [추가] 다시 하기 클릭 시 수집
+        <button onClick={() => {
             const windowObj = window as any;
             windowObj.dataLayer = windowObj.dataLayer || [];
             windowObj.dataLayer.push({ event: 'try_again_click' });
             router.push("/");
-          }}
-          className="w-full py-4 text-white/30 hover:text-white font-black text-xs tracking-[0.3em] uppercase"
-        >
+          }} className="w-full py-4 text-white/30 hover:text-white font-black text-xs tracking-[0.3em] uppercase">
           BACK TO GYM (다시 도전하기)
         </button>
       </div>

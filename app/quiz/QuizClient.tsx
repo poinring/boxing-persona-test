@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react'; // useMemo 제거
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 
 type CsvRecord = Record<string, string>;
 
@@ -12,20 +11,24 @@ interface Choice {
   type: 'agg' | 'tech' | 'men';
 }
 
-export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
+// [수정] characters 데이터를 추가로 받습니다.
+export default function QuizClient({ 
+  questions, 
+  characters 
+}: { 
+  questions: CsvRecord[], 
+  characters: any[] 
+}) {
   const router = useRouter();
 
-  // [수정] 하이드레이션 오류 방지를 위해 상태로 관리
   const [shuffledQuestions, setShuffledQuestions] = useState<any[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Array<string | null>>([]);
-  const [isMounted, setIsMounted] = useState(false); // 마운트 상태 확인용
+  const [isMounted, setIsMounted] = useState(false);
 
-  // [수정 및 수집 1] 마운트 시점에 데이터 파싱 및 셔플 진행
   useEffect(() => {
     if (!questions || questions.length === 0) return;
 
-    // 브라우저 환경에서만 셔플을 진행하여 서버와 일치시킴
     const parsedData = questions.map((q, idx) => {
       const rawChoices: Choice[] = [
         { text: q.agg_option ?? '', type: 'agg' },
@@ -43,9 +46,8 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
 
     setShuffledQuestions(parsedData);
     setAnswers(Array(parsedData.length).fill(null));
-    setIsMounted(true); // 이제 클라이언트 렌더링 준비 완료
+    setIsMounted(true);
 
-    // 데이터 영역에 시작 이벤트 전송
     const windowObj = window as any;
     windowObj.dataLayer = windowObj.dataLayer || [];
     windowObj.dataLayer.push({
@@ -54,14 +56,12 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
     });
   }, [questions]);
 
-  // 마운트되기 전에는 서버의 정적 결과와 충돌하지 않도록 빈 화면 반환
   if (!isMounted || shuffledQuestions.length === 0) {
     return <div className="min-h-screen bg-[#050505]" />;
   }
 
   const current = shuffledQuestions[currentStep];
 
-  // [수집 2] 선택지를 누를 때마다 데이터 전송 (기존 로직 유지)
   const handleSelect = (choice: Choice) => {
     const copy = [...answers];
     copy[currentStep] = choice.type;
@@ -87,7 +87,7 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
     else setCurrentStep((s) => s - 1);
   };
 
-  // [수집 3] 마지막 제출 버튼 누를 때 알림 (기존 로직 유지)
+  // [수정된 핵심 로직] 
   const handleSubmit = () => {
     if (answers.every((a) => a !== null)) {
       const score = { agg: 0, tech: 0, men: 0 };
@@ -97,6 +97,27 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
         if (type === 'men') score.men++;
       });
 
+      // 1. 기존 ResultClient에 있던 캐릭터 매칭 로직을 여기서 미리 실행합니다.
+      const getDistance = (c: any) => {
+        return Math.sqrt(
+          Math.pow(Number(c.agg) - score.agg, 2) +
+          Math.pow(Number(c.tech) - score.tech, 2) +
+          Math.pow(Number(c.men) - score.men, 2)
+        );
+      };
+
+      let closest = characters[0];
+      let minDistance = getDistance(closest);
+
+      characters.forEach((c) => {
+        const dist = getDistance(c);
+        if (dist < minDistance) {
+          closest = c;
+          minDistance = dist;
+        }
+      });
+
+      // 2. 데이터 수집 (기존 로직 유지)
       const windowObj = window as any;
       windowObj.dataLayer = windowObj.dataLayer || [];
       windowObj.dataLayer.push({
@@ -106,8 +127,10 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
         final_men: score.men
       });
       
-      const scoreStr = encodeURIComponent(JSON.stringify(score));
-      router.push(`/quiz/result/loading?score=${scoreStr}`);
+      // 3. 아주 심플한 URL로 변경하여 로딩 페이지로 이동
+      // id: 캐릭터ID, s: 점수(예: 253)
+      const scoreStr = `${score.agg}${score.tech}${score.men}`;
+      router.push(`/quiz/result/loading?id=${closest.id}&s=${scoreStr}`);
     }
   };
 
@@ -115,6 +138,7 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
 
   return (
     <main className="min-h-screen w-full bg-[#050505] text-white flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden">
+      {/* 기존 디자인 유지 */}
       <div className="absolute inset-0 opacity-5 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
 
