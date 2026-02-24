@@ -17,12 +17,9 @@ export default function BGMPlayer() {
         const widget = windowObj.SC.Widget(iframeElement);
         widgetRef.current = widget;
 
-        // 상태 실시간 감지
         widget.bind(windowObj.SC.Widget.Events.PLAY, () => setIsPlaying(true));
         widget.bind(windowObj.SC.Widget.Events.PAUSE, () => setIsPlaying(false));
-        widget.bind(windowObj.SC.Widget.Events.FINISH, () => setIsPlaying(false));
-
-        // 최초 1회 재생을 위한 전역 클릭 리스너 등록
+        
         widget.bind(windowObj.SC.Widget.Events.READY, () => {
           window.addEventListener('click', handleFirstInteraction);
         });
@@ -36,7 +33,6 @@ export default function BGMPlayer() {
       }
     };
 
-    // 스크립트 체크 및 초기화
     if (windowObj.SC) {
       initWidget();
     } else {
@@ -48,81 +44,71 @@ export default function BGMPlayer() {
       }, 500);
       return () => clearInterval(timer);
     }
-
     return () => window.removeEventListener('click', handleFirstInteraction);
   }, []);
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!widgetRef.current) return;
-    
-    if (isPlaying) {
-      widgetRef.current.pause();
-    } else {
-      widgetRef.current.play();
-    }
+    isPlaying ? widgetRef.current.pause() : widgetRef.current.play();
   };
 
   return (
-    <div className="fixed top-6 right-6 z-[9999]">
-      {/* 1. 실제 작동하지만 눈에는 안 보이는 위젯 */}
+    <>
       <div className="hidden">
-        <iframe
-          id="sc-player-hidden"
-          width="100%"
-          height="166"
-          scrolling="no"
-          frameBorder="no"
-          allow="autoplay"
-          src={trackUrl}
-        />
+        <iframe id="sc-player-hidden" allow="autoplay" src={trackUrl} />
       </div>
 
-      {/* 2. 메인 컨트롤 버튼 (단 하나!) */}
-      <button
-        onClick={togglePlay}
-        className={`
-          w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg
-          border backdrop-blur-md hover:scale-110 active:scale-95
-          ${isPlaying 
-            ? 'bg-red-500/10 border-red-500/50 ring-2 ring-red-500/20' 
-            : 'bg-black/60 border-white/20 hover:bg-black/80'} 
-        `}
-      >
-        <div className="flex items-center justify-center pointer-events-none">
-          {isPlaying ? (
-            /* [재생 중] 미니멀한 이퀄라이저 애니메이션 */
-            <div className="flex items-end gap-[1.5px] h-3">
-              {[1, 2, 3].map((i) => (
-                <span 
-                  key={i}
-                  className="w-[2px] bg-red-500 rounded-full animate-music-bar"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </div>
-          ) : (
-            /* [정지 중] 아주 심플하고 작은 음표 */
-            <svg 
-              viewBox="0 0 24 24" 
-              className="w-4 h-4 fill-white/60" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-            </svg>
-          )}
-        </div>
-      </button>
+      <div className="fixed top-5 right-5 z-[9999] flex items-center gap-3 group">
+        <span className="opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 group-hover:translate-x-0 text-[10px] text-white/40 tracking-[0.2em] font-light pointer-events-none uppercase">
+          {isPlaying ? 'Pause BGM' : 'Play BGM'}
+        </span>
+
+        <button
+          onClick={togglePlay}
+          className="relative flex items-center justify-center w-10 h-10 rounded-lg transition-all active:scale-95"
+        >
+          {/* 배경 글로우 */}
+          <div className={`absolute inset-0 rounded-lg transition-all duration-700 ${
+            isPlaying ? 'bg-red-500/10 blur-md' : 'bg-transparent'
+          }`} />
+
+          {/* 비주얼라이저 영역 (재생/정지 통합) */}
+          <div className="relative z-10 flex items-end justify-center gap-[3px] h-3.5 px-2">
+            {[
+              { h: 'h-[6px]', delay: '0.1s' },
+              { h: 'h-[12px]', delay: '0.3s' },
+              { h: 'h-[8px]', delay: '0.2s' },
+              { h: 'h-[10px]', delay: '0.4s' }
+            ].map((bar, i) => (
+              <span
+                key={i}
+                className={`w-[2px] rounded-full transition-all duration-500 ${
+                  isPlaying 
+                    ? 'bg-red-500 animate-visualizer' 
+                    : `bg-white/30 group-hover:bg-white/60 ${bar.h}`
+                }`}
+                style={{
+                  animationDelay: isPlaying ? bar.delay : '0s'
+                }}
+              />
+            ))}
+          </div>
+
+          {/* 테두리: 호버 시에만 노출 */}
+          <div className="absolute inset-0 border border-transparent group-hover:border-white/10 rounded-lg transition-all duration-500" />
+        </button>
+      </div>
 
       <style jsx global>{`
-        @keyframes music-bar {
+        @keyframes visualizer {
           0%, 100% { height: 4px; }
-          50% { height: 12px; }
+          50% { height: 14px; }
         }
-        .animate-music-bar {
-          animation: music-bar 0.7s ease-in-out infinite;
+        .animate-visualizer {
+          animation: visualizer 0.8s ease-in-out infinite;
         }
       `}</style>
-    </div>
+    </>
   );
 }
