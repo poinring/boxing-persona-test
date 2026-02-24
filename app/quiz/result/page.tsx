@@ -29,9 +29,7 @@ export default async function ResultPage({
 
   return (
     <ResultClient
-      questions={questions}
-      characters={characters}
-      answers={answers}
+        characters={characters}
     />
-  );
+    );
 }
