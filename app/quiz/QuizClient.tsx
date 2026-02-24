@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // useMemo 제거
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 type CsvRecord = Record<string, string>;
 
-// 선택지 타입 정의
 interface Choice {
   text: string;
   type: 'agg' | 'tech' | 'men';
@@ -16,20 +15,24 @@ interface Choice {
 export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
   const router = useRouter();
 
-  // 1. 데이터 파싱 및 셔플 로직
-  const parsed = useMemo(() => {
-    if (!questions || questions.length === 0) return [];
-    return questions.map((q, idx) => {
-      // 선택지 배열 생성
+  // [수정] 하이드레이션 오류 방지를 위해 상태로 관리
+  const [shuffledQuestions, setShuffledQuestions] = useState<any[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState<Array<string | null>>([]);
+  const [isMounted, setIsMounted] = useState(false); // 마운트 상태 확인용
+
+  // [수정 및 수집 1] 마운트 시점에 데이터 파싱 및 셔플 진행
+  useEffect(() => {
+    if (!questions || questions.length === 0) return;
+
+    // 브라우저 환경에서만 셔플을 진행하여 서버와 일치시킴
+    const parsedData = questions.map((q, idx) => {
       const rawChoices: Choice[] = [
         { text: q.agg_option ?? '', type: 'agg' },
         { text: q.tech_option ?? '', type: 'tech' },
         { text: q.men_option ?? '', type: 'men' },
       ];
-      
-      // 사용자 몰입을 위해 선택지 순서를 랜덤하게 섞음 (Shuffle)
       const shuffledChoices = [...rawChoices].sort(() => Math.random() - 0.5);
-
       return {
         id: q.id ?? String(idx),
         tag: q.tag_kr ?? 'ROUND',
@@ -37,40 +40,45 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
         choices: shuffledChoices,
       };
     });
+
+    setShuffledQuestions(parsedData);
+    setAnswers(Array(parsedData.length).fill(null));
+    setIsMounted(true); // 이제 클라이언트 렌더링 준비 완료
+
+    // 데이터 영역에 시작 이벤트 전송
+    const windowObj = window as any;
+    windowObj.dataLayer = windowObj.dataLayer || [];
+    windowObj.dataLayer.push({
+      event: 'quiz_start',
+      total_rounds: parsedData.length
+    });
   }, [questions]);
 
-  const [currentStep, setCurrentStep] = useState(0);
-  // answers에는 이제 index가 아니라 선택한 스탯 타입('agg', 'tech', 'men')을 저장합니다.
-  const [answers, setAnswers] = useState<Array<string | null>>([]);
-
-  useEffect(() => {
-    if (parsed.length > 0) {
-      setAnswers(Array(parsed.length).fill(null));
-      setCurrentStep(0);
-    }
-  }, [parsed.length]);
-
-  const current = parsed[currentStep];
-
-  if (!parsed.length) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white font-ui">
-        <p className="text-white/60">체육관 문이 잠겼습니다(데이터 로드 실패).</p>
-        <Link href="/" className="mt-4 px-6 py-2 bg-red-600 font-title italic">BACK TO GYM</Link>
-      </div>
-    );
+  // 마운트되기 전에는 서버의 정적 결과와 충돌하지 않도록 빈 화면 반환
+  if (!isMounted || shuffledQuestions.length === 0) {
+    return <div className="min-h-screen bg-[#050505]" />;
   }
 
-  if (!current) return <div className="min-h-screen bg-[#050505]" />;
+  const current = shuffledQuestions[currentStep];
 
-  // 2. 선택 핸들러 업데이트
-  const handleSelect = (statType: string) => {
+  // [수집 2] 선택지를 누를 때마다 데이터 전송 (기존 로직 유지)
+  const handleSelect = (choice: Choice) => {
     const copy = [...answers];
-    copy[currentStep] = statType;
+    copy[currentStep] = choice.type;
     setAnswers(copy);
 
-    if (currentStep < parsed.length - 1) {
-      setTimeout(() => setCurrentStep((s) => s + 1), 400); // 3지선다이므로 다음 문제로 넘어가는 딜레이 소폭 증가
+    const windowObj = window as any;
+    windowObj.dataLayer = windowObj.dataLayer || [];
+    windowObj.dataLayer.push({
+      event: 'quiz_progress',
+      round_number: currentStep + 1,
+      question_text: current.text,
+      answer_text: choice.text,
+      answer_type: choice.type
+    });
+
+    if (currentStep < shuffledQuestions.length - 1) {
+      setTimeout(() => setCurrentStep((s) => s + 1), 400);
     }
   };
 
@@ -79,7 +87,7 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
     else setCurrentStep((s) => s - 1);
   };
 
-  // 3. 제출 로직: 스탯별 합산 계산
+  // [수집 3] 마지막 제출 버튼 누를 때 알림 (기존 로직 유지)
   const handleSubmit = () => {
     if (answers.every((a) => a !== null)) {
       const score = { agg: 0, tech: 0, men: 0 };
@@ -88,32 +96,37 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
         if (type === 'tech') score.tech++;
         if (type === 'men') score.men++;
       });
+
+      const windowObj = window as any;
+      windowObj.dataLayer = windowObj.dataLayer || [];
+      windowObj.dataLayer.push({
+        event: 'quiz_finish',
+        final_agg: score.agg,
+        final_tech: score.tech,
+        final_men: score.men
+      });
       
-      // 결과 페이지로 스탯 합계 전달
       const scoreStr = encodeURIComponent(JSON.stringify(score));
       router.push(`/quiz/result/loading?score=${scoreStr}`);
     }
   };
 
-  const progress = ((currentStep + 1) / parsed.length) * 100;
+  const progress = ((currentStep + 1) / shuffledQuestions.length) * 100;
 
   return (
     <main className="min-h-screen w-full bg-[#050505] text-white flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden">
-      
       <div className="absolute inset-0 opacity-5 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
 
       <section className="w-full max-w-xl flex flex-col relative z-10">
-        
         <header className="mb-12 flex flex-col items-center">
           <div className="flex items-center gap-3 mb-4">
             <span className="font-title text-red-600 text-xl italic tracking-tighter">ROUND</span>
             <span className="font-title text-5xl italic tracking-tighter leading-none">
               {String(currentStep + 1).padStart(2, '0')}
             </span>
-            <span className="text-white/20 self-end mb-1 font-bold">/ {parsed.length}</span>
+            <span className="text-white/20 self-end mb-1 font-bold">/ {shuffledQuestions.length}</span>
           </div>
-          
           <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden border border-white/5 p-[1px]">
             <motion.div
               initial={{ width: 0 }}
@@ -141,14 +154,13 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
               </h2>
             </div>
 
-            {/* 선택지 3개 렌더링 */}
             <div className="flex flex-col gap-4">
               {current.choices.map((choice, index) => {
                 const isSelected = answers[currentStep] === choice.type;
                 return (
                   <button
                     key={index}
-                    onClick={() => handleSelect(choice.type)}
+                    onClick={() => handleSelect(choice)}
                     className={`
                       relative group text-left px-6 py-5 sm:py-6 rounded-sm
                       border-2 transition-all duration-200 overflow-hidden
@@ -182,7 +194,7 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
             <span className="group-hover:-translate-x-1 transition-transform">←</span> Prev 
           </button>
 
-          {currentStep === parsed.length - 1 ? (
+          {currentStep === shuffledQuestions.length - 1 ? (
             <button
               onClick={handleSubmit}
               disabled={!answers.every((a) => a !== null)}

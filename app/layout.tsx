@@ -5,7 +5,7 @@ import {
   Black_Han_Sans,
   East_Sea_Dokdo,
 } from "next/font/google";
-import Script from 'next/script'; // [추가] Script 컴포넌트 임포트
+import Script from 'next/script';
 
 import "./globals.css";
 
@@ -42,11 +42,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // [설정] 본인의 GA4 측정 ID를 여기에 적으세요!
-  const GA_ID = "G-N6D74S2S4B"; 
+  // 전달해주신 GTM ID
+  const GTM_ID = "GTM-WGXF5QLZ";
 
   return (
     <html lang="ko">
+      <head>
+        {/* --- 1. Google Tag Manager (Head 영역) --- */}
+        <Script id="google-tag-manager" strategy="afterInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','${GTM_ID}');
+          `}
+        </Script>
+      </head>
       <body
         className={`
           ${geistSans.variable}
@@ -58,24 +70,23 @@ export default function RootLayout({
           text-white
         `}
       >
+        {/* --- 2. Google Tag Manager (noscript, Body 최상단 배치) --- */}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
+
         {children}
 
-        {/* --- 1. 사운드클라우드 API 스크립트 --- */}
-        <Script src="https://w.soundcloud.com/player/api.js" strategy="lazyOnload" />
-
-        {/* --- 2. Google Analytics 4 스크립트 --- */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-          strategy="afterInteractive"
+        {/* --- 3. 사운드클라우드 API 스크립트 --- */}
+        <Script 
+          src="https://w.soundcloud.com/player/api.js" 
+          strategy="lazyOnload" 
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_ID}');
-          `}
-        </Script>
       </body>
     </html>
   );

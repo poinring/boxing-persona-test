@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react"; // [추가] useEffect
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -27,18 +27,16 @@ export default function ResultClient({
 
   const { agg, tech, men } = score;
   
-  // 총 질문 수(10개) 기준으로 퍼센트 계산
   const totalQuestions = 10; 
   const percentAgg = Math.min(Math.round((agg / totalQuestions) * 100), 100);
   const percentTech = Math.min(Math.round((tech / totalQuestions) * 100), 100);
   const percentMen = Math.min(Math.round((men / totalQuestions) * 100), 100);
 
-  // 2. 캐릭터 매칭 로직 (유클리드 거리 기반 최단 거리 캐릭터 매칭)
+  // 2. 캐릭터 매칭 로직
   const character = useMemo(() => {
     if (!characters.length) return null;
     
     const getDistance = (c: any) => {
-      // 캐릭터 시트의 점수(0~10점 사이로 기록됨)와 유저의 획득 점수 차이 계산
       return Math.sqrt(
         Math.pow(Number(c.agg) - agg, 2) +
         Math.pow(Number(c.tech) - tech, 2) +
@@ -59,6 +57,36 @@ export default function ResultClient({
     return closest;
   }, [characters, agg, tech, men]);
 
+  // [수집 1] 어떤 캐릭터가 결과로 나왔는지 수집 (전환 지표)
+  useEffect(() => {
+    if (character) {
+      const windowObj = window as any;
+      windowObj.dataLayer = windowObj.dataLayer || [];
+      windowObj.dataLayer.push({
+        event: 'quiz_finish',            // 이벤트명: 퀴즈 완료
+        character_id: character.id,      // 캐릭터 ID
+        character_name: character.name_short_kr, // 캐릭터 이름
+        final_score: score               // 최종 스탯 점수
+      });
+    }
+  }, [character, score]);
+
+  // [수집 2] 공유 버튼 클릭 수집 (확산 지표)
+  const handleShare = () => {
+    // 1. 클립보드 복사 로직
+    navigator.clipboard.writeText(window.location.href);
+    alert("공유 링크가 복사되었습니다! 🥊");
+
+    // 2. 데이터 전송
+    const windowObj = window as any;
+    windowObj.dataLayer = windowObj.dataLayer || [];
+    windowObj.dataLayer.push({
+      event: 'share_click',              // 이벤트명: 공유 클릭
+      share_method: 'copy_link',         // 공유 방식
+      character_name: character?.name_short_kr // 어떤 캐릭터 결과에서 공유했는지
+    });
+  };
+
   const bestMatch = characters.find(c => String(c.id) === String(character?.best_match_id));
   const worstMatch = characters.find(c => String(c.id) === String(character?.worst_match_id));
 
@@ -68,7 +96,6 @@ export default function ResultClient({
     </div>
   );
 
-  // 잘림 방지용 타이틀 컴포넌트
   function SafeItalicTitle({ children, className }: { children: React.ReactNode; className: string }) {
     return (
       <span className={`${className} italic pr-4 inline-block`}>
@@ -80,7 +107,7 @@ export default function ResultClient({
   return (
     <main className="min-h-screen bg-[#050505] text-white px-6 py-16 flex flex-col items-center overflow-x-hidden font-ui">
       
-      {/* 1. 메인 판정: 히어로 섹션 */}
+      {/* 1. 메인 판정 섹션 */}
       <section className="flex flex-col items-center text-center mb-24 w-full">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -121,14 +148,13 @@ export default function ResultClient({
         </div>
       </section>
 
-      {/* 2. 제1보: 주먹의 성질 (능력치 분석) */}
+      {/* 2. 주먹의 성질 분석 (기존 유지) */}
       <section className="w-full max-w-md mb-24 group">
         <div className="flex items-baseline gap-2 mb-6">
           <span className="font-title text-red-600 text-sm italic font-black uppercase">제1보</span>
           <h2 className="font-title text-2xl text-white italic tracking-tighter uppercase">주먹의 성질</h2>
         </div>
 
-        {/* 최강 능력치 뱃지 */}
         <div className="mb-4 flex items-center gap-3 bg-red-600/10 border border-red-600/30 p-3 italic">
             <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 font-black uppercase skew-x-[-15deg]">Strong Point</span>
             <span className="text-white font-black text-sm tracking-tighter">
@@ -168,7 +194,7 @@ export default function ResultClient({
         </div>
       </section>
 
-      {/* 3. 제2보: 관장의 일침 */}
+      {/* 3. 압천의 일침 (기존 유지) */}
       <section className="w-full max-w-md mb-24 flex flex-col items-center">
         <div className="flex items-baseline gap-2 mb-6 w-full">
           <span className="font-title text-red-600 text-sm italic font-black">제2보</span>
@@ -187,7 +213,7 @@ export default function ResultClient({
         </div>
       </section>
 
-      {/* 4. 제3보: 필살기 */}
+      {/* 4. 필살기 및 상성 (기존 유지) */}
       <section className="w-full max-w-md mb-24">
         <div className="flex items-baseline gap-2 mb-6">
           <span className="font-title text-red-600 text-sm italic font-black">제3보</span>
@@ -205,7 +231,6 @@ export default function ResultClient({
         </div>
       </section>
 
-      {/* 5. 최종보: 상성 */}
       <section className="w-full max-w-md mb-24 space-y-4">
         <div className="flex items-baseline gap-2 mb-6">
           <span className="font-title text-red-600 text-sm italic font-black">최종보</span>
@@ -235,16 +260,22 @@ export default function ResultClient({
         )}
       </section>
 
-      {/* CTA 버튼들 */}
+      {/* 5. CTA 버튼 (수집 로직 적용) */}
       <div className="w-full max-w-md mt-10 space-y-4">
         <button 
-          onClick={() => { navigator.clipboard.writeText(window.location.href); alert("공유 링크가 복사되었습니다! 🥊"); }}
+          onClick={handleShare} // 수정: handleShare 함수 호출
           className="w-full py-6 bg-red-600 text-white font-title text-3xl italic border-b-8 border-red-900"
         >
           <SafeItalicTitle className="">결과 공유하기</SafeItalicTitle>
         </button>
         <button 
-          onClick={() => router.push("/")}
+          onClick={() => {
+            // [추가] 다시 하기 클릭 시 수집
+            const windowObj = window as any;
+            windowObj.dataLayer = windowObj.dataLayer || [];
+            windowObj.dataLayer.push({ event: 'try_again_click' });
+            router.push("/");
+          }}
           className="w-full py-4 text-white/30 hover:text-white font-black text-xs tracking-[0.3em] uppercase"
         >
           BACK TO GYM (다시 도전하기)
