@@ -11,7 +11,6 @@ interface Choice {
   type: 'agg' | 'tech' | 'men';
 }
 
-// [수정] characters 데이터를 추가로 받습니다.
 export default function QuizClient({ 
   questions, 
   characters 
@@ -87,7 +86,10 @@ export default function QuizClient({
     else setCurrentStep((s) => s - 1);
   };
 
-  // [수정된 핵심 로직] 
+  /**
+   * [업그레이드된 알고리즘]
+   * 단순 거리 계산에 '주특기 가중치'를 더해 사용자의 성향이 가장 강한 캐릭터를 매칭합니다.
+   */
   const handleSubmit = () => {
     if (answers.every((a) => a !== null)) {
       const score = { agg: 0, tech: 0, men: 0 };
@@ -97,15 +99,44 @@ export default function QuizClient({
         if (type === 'men') score.men++;
       });
 
-      // 1. 기존 ResultClient에 있던 캐릭터 매칭 로직을 여기서 미리 실행합니다.
+      // 1. 사용자의 가장 높은 성향(Dominant Trait) 식별
+      const traits = [
+        { name: 'agg', val: score.agg },
+        { name: 'tech', val: score.tech },
+        { name: 'men', val: score.men }
+      ];
+      const userMainTrait = traits.reduce((prev, curr) => (prev.val >= curr.val) ? prev : curr).name;
+
+      // 2. 가중치 적용 거리 계산 함수
       const getDistance = (c: any) => {
-        return Math.sqrt(
-          Math.pow(Number(c.agg) - score.agg, 2) +
-          Math.pow(Number(c.tech) - score.tech, 2) +
-          Math.pow(Number(c.men) - score.men, 2)
-        );
+        const cAgg = Number(c.agg) || 0;
+        const cTech = Number(c.tech) || 0;
+        const cMen = Number(c.men) || 0;
+
+        // 해당 캐릭터의 주성향 찾기
+        const cTraits = [
+          { name: 'agg', val: cAgg },
+          { name: 'tech', val: cTech },
+          { name: 'men', val: cMen }
+        ];
+        const charMainTrait = cTraits.reduce((prev, curr) => (prev.val >= curr.val) ? prev : curr).name;
+
+        // 기본 유클리드 거리 (제곱합)
+        const dAgg = Math.pow(cAgg - score.agg, 2);
+        const dTech = Math.pow(cTech - score.tech, 2);
+        const dMen = Math.pow(cMen - score.men, 2);
+        
+        let totalDist = Math.sqrt(dAgg + dTech + dMen);
+
+        // [핵심 가중치] 사용자의 주성향과 캐릭터의 주성향이 일치하면 거리를 20% 줄여 우선 매칭
+        if (userMainTrait === charMainTrait) {
+          totalDist *= 0.8; 
+        }
+
+        return totalDist;
       };
 
+      // 3. 최적 매칭 캐릭터 탐색
       let closest = characters[0];
       let minDistance = getDistance(closest);
 
@@ -117,19 +148,19 @@ export default function QuizClient({
         }
       });
 
-      // 2. 데이터 수집 (기존 로직 유지)
+      // 4. 데이터 수집 (기존 로직 유지)
       const windowObj = window as any;
       windowObj.dataLayer = windowObj.dataLayer || [];
       windowObj.dataLayer.push({
         event: 'quiz_finish',
         final_agg: score.agg,
         final_tech: score.tech,
-        final_men: score.men
+        final_men: score.men,
+        matched_character: closest.name_short_kr
       });
       
-      // 3. 아주 심플한 URL로 변경하여 로딩 페이지로 이동
-      // id: 캐릭터ID, s: 점수(예: 253)
-      const scoreStr = `${score.agg}${score.tech}${score.men}`;
+      // 5. 로딩 페이지로 이동
+      const scoreStr = `${score.agg}-${score.tech}-${score.men}`;
       router.push(`/quiz/result/loading?id=${closest.id}&s=${scoreStr}`);
     }
   };
@@ -137,8 +168,8 @@ export default function QuizClient({
   const progress = ((currentStep + 1) / shuffledQuestions.length) * 100;
 
   return (
-    <main className="min-h-screen w-full bg-[#050505] text-white flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden">
-      {/* 기존 디자인 유지 */}
+    <main className="min-h-screen w-full bg-[#050505] text-white flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden font-ui">
+      {/* 배경 디자인 */}
       <div className="absolute inset-0 opacity-5 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
 

@@ -15,8 +15,13 @@ export default function ResultClient({
 }) {
   const router = useRouter();
 
-  // 1. [변경] 짧은 문자열(253)에서 점수를 복원합니다.
+  // 1. [개선] 구분자(예: 4-3-3)를 기준으로 점수를 더 안전하게 복원합니다.
   const score = useMemo(() => {
+    if (scoreStr && scoreStr.includes("-")) {
+      const [a, t, m] = scoreStr.split("-").map(Number);
+      return { agg: a || 0, tech: t || 0, men: m || 0 };
+    }
+    // 기존 방식(3자리) 호환성 유지
     if (scoreStr && scoreStr.length === 3) {
       return {
         agg: parseInt(scoreStr[0]),
@@ -29,17 +34,16 @@ export default function ResultClient({
 
   const { agg, tech, men } = score;
   
+  // 전체 질문 수 (10개) 기준 백분율 계산
   const totalQuestions = 10; 
   const percentAgg = Math.min(Math.round((agg / totalQuestions) * 100), 100);
   const percentTech = Math.min(Math.round((tech / totalQuestions) * 100), 100);
   const percentMen = Math.min(Math.round((men / totalQuestions) * 100), 100);
 
-  // 2. [변경] URL에 포함된 id로 캐릭터를 즉시 찾습니다. (계산은 이미 끝났으니까요!)
   const character = useMemo(() => {
     return characters.find(c => String(c.id) === String(id)) || null;
   }, [characters, id]);
 
-  // [수집 1] GA4 수집 (기존 유지)
   useEffect(() => {
     if (character) {
       const windowObj = window as any;
@@ -53,7 +57,6 @@ export default function ResultClient({
     }
   }, [character, score]);
 
-  // [수집 2] 공유 버튼 (기존 유지)
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     alert("공유 링크가 복사되었습니다! 🥊");
@@ -71,7 +74,7 @@ export default function ResultClient({
   const worstMatch = characters.find(c => String(c.id) === String(character?.worst_match_id));
 
   if (!character) return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white font-black italic">
       판정단을 불러오는 중...
     </div>
   );
@@ -86,7 +89,7 @@ export default function ResultClient({
 
   return (
     <main className="min-h-screen bg-[#050505] text-white px-6 py-16 flex flex-col items-center overflow-x-hidden font-ui">
-      {/* --- 기존 모든 디자인 코드 그대로 유지 --- */}
+      {/* 1. 상단 분석 섹션 */}
       <section className="flex flex-col items-center text-center mb-24 w-full">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -112,7 +115,7 @@ export default function ResultClient({
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="relative mt-12 cursor-crosshair"
+          className="relative mt-12"
         >
           <img 
             src={`/images/characters/char_${String(character.id).padStart(2,"0")}.png`} 
@@ -122,7 +125,7 @@ export default function ResultClient({
           <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(220,38,38,0.1)_0%,transparent_70%)] -z-10" />
         </motion.div>
 
-        <div className="font-dialogue text-2xl sm:text-3xl text-white italic mt-10 leading-tight border-l-8 border-red-600 pl-6 py-4 bg-white/5 max-w-lg">
+        <div className="font-dialogue text-2xl sm:text-3xl text-white italic mt-10 leading-tight border-l-8 border-red-600 pl-6 py-4 bg-white/5 max-w-lg break-keep">
           "{character.quote_kr}"
         </div>
       </section>
@@ -133,14 +136,16 @@ export default function ResultClient({
           <span className="font-title text-red-600 text-sm italic font-black uppercase">제1보</span>
           <h2 className="font-title text-2xl text-white italic tracking-tighter uppercase">주먹의 성질</h2>
         </div>
+        
         <div className="mb-4 flex items-center gap-3 bg-red-600/10 border border-red-600/30 p-3 italic">
             <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 font-black uppercase skew-x-[-15deg]">Strong Point</span>
             <span className="text-white font-black text-sm tracking-tighter">
-            {percentAgg >= percentTech && percentAgg >= percentMen && "압도적인 파괴력의 소유자"}
-            {percentTech > percentAgg && percentTech >= percentMen && "정교한 기술의 테크니션"}
-            {percentMen > percentAgg && percentMen > percentTech && "꺾이지 않는 강철 멘탈"}
+              {agg >= tech && agg >= men && "압도적인 파괴력의 소유자"}
+              {tech > agg && tech >= men && "정교한 기술의 테크니션"}
+              {men > agg && men > tech && "꺾이지 않는 강철 멘탈"}
             </span>
         </div>
+
         <div className="space-y-8 bg-zinc-900/40 p-8 border-y-2 border-red-600/30">
           {[
             { name: "파괴력 (AGG)", value: percentAgg, color: "from-red-600 to-orange-500", labelColor: "text-orange-500" },
@@ -200,33 +205,34 @@ export default function ResultClient({
         </div>
         {bestMatch && (
           <div className="bg-blue-900/10 border-l-4 border-blue-500 p-5 flex items-center gap-5">
-            <div className="w-16 h-16 rounded-full border-2 border-blue-500 bg-zinc-800 overflow-hidden">
+            <div className="w-16 h-16 rounded-full border-2 border-blue-500 bg-zinc-800 overflow-hidden shrink-0">
                <img src={`/images/characters/char_${String(bestMatch.id).padStart(2,"0")}.png`} className="w-full h-full object-cover" alt="" />
             </div>
-            <div><p className="text-[10px] text-blue-400 font-black tracking-widest uppercase mb-1">Best Partner</p><p className="font-black text-xl italic">{bestMatch.name_full_kr}</p></div>
+            <div>
+              <p className="text-[10px] text-blue-400 font-black tracking-widest uppercase mb-1">Best Partner</p>
+              <p className="font-black text-xl italic">{bestMatch.name_full_kr}</p>
+            </div>
           </div>
         )}
         {worstMatch && (
           <div className="bg-red-900/10 border-l-4 border-red-600 p-5 flex items-center gap-5">
-            <div className="w-16 h-16 rounded-full border-2 border-red-600 bg-zinc-800 overflow-hidden">
+            <div className="w-16 h-16 rounded-full border-2 border-red-600 bg-zinc-800 overflow-hidden shrink-0">
                <img src={`/images/characters/char_${String(worstMatch.id).padStart(2,"0")}.png`} className="w-full h-full object-cover" alt="" />
             </div>
-            <div><p className="text-[10px] text-red-500 font-black tracking-widest uppercase mb-1">Fatal Rival</p><p className="font-black text-xl italic">{worstMatch.name_full_kr}</p></div>
+            <div>
+              <p className="text-[10px] text-red-500 font-black tracking-widest uppercase mb-1">Fatal Rival</p>
+              <p className="font-black text-xl italic">{worstMatch.name_full_kr}</p>
+            </div>
           </div>
         )}
       </section>
 
       {/* 5. CTA 버튼 */}
       <div className="w-full max-w-md mt-10 space-y-4">
-        <button onClick={handleShare} className="w-full py-6 bg-red-600 text-white font-title text-3xl italic border-b-8 border-red-900">
+        <button onClick={handleShare} className="w-full py-6 bg-red-600 text-white font-title text-3xl italic border-b-8 border-red-900 transition-transform active:translate-y-1 active:border-b-4">
           <SafeItalicTitle className="">결과 공유하기</SafeItalicTitle>
         </button>
-        <button onClick={() => {
-            const windowObj = window as any;
-            windowObj.dataLayer = windowObj.dataLayer || [];
-            windowObj.dataLayer.push({ event: 'try_again_click' });
-            router.push("/");
-          }} className="w-full py-4 text-white/30 hover:text-white font-black text-xs tracking-[0.3em] uppercase">
+        <button onClick={() => router.push("/")} className="w-full py-4 text-white/30 hover:text-white font-black text-xs tracking-[0.3em] uppercase transition-colors">
           BACK TO GYM (다시 도전하기)
         </button>
       </div>
