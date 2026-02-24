@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     description: character.summary_kr,
     openGraph: {
       title: `[판정] 내 주먹은 '${character.name_short_kr}'급! 필살기는 '${character.signature_move}'`,
-      description: character.quote_kr
-      //images: [`/images/characters/char_${String(character.id).padStart(2, "0")}.png`],
+      description: character.quote_kr,
+      images: [`/images/characters/char_${String(character.id).padStart(2, "0")}.png`],
     },
   };
 }
