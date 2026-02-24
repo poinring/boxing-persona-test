@@ -33,13 +33,19 @@ const eastSeaDokdo = East_Sea_Dokdo({
 });
 
 export const metadata = {
-  title: '어이, 링 위로 올라와! | 복싱 성향 테스트', //
-  description: '"비실대지 말고 네 주먹을 증명해봐라!" 압천 관장님이 판별하는 당신의 진짜 복싱 스타일은? 10초 만에 확인하는 나의 복싱 DNA.', //
+  title: '어이, 링 위로 올라와! | 복싱 성향 테스트',
+  description: '링 위에 자리 하나 남는데 네 재능이나 좀 보고 가자고.',
   openGraph: {
-    title: '어이, 링 위로 올라와! | 복싱 성향 테스트', //
-    description: '압천 체육관 입단 테스트 실시! 당신 안에 숨겨진 진짜 복싱 재능을 깨워보세요. 🥊', //
-    images: ['/images/characters/char_og.png'], // 관장님 이미지 활용
-    siteName: '복서 은서', //
+    title: '어이, 주먹은 폼이냐?| 복싱 성향 테스트',
+    description: '10초만 링 위로 올라와봐라. 네놈 재능 좀 보게.',
+    images: [
+      {
+        url: '/images/char_og_2.png', // 업로드하신 이미지 파일명 확인 필수!
+        width: 1200,
+        height: 630,
+        alt: '카모가와 관장님의 복싱 성향 테스트',
+      },
+    ],
   },
 };
 
