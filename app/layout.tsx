@@ -43,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   // [설정] 본인의 GA4 측정 ID를 여기에 적으세요!
-  const GA_ID = "GTM-WGXF5QLZ"; 
+  const GA_ID = "G-N6D74S2S4B"; 
 
   return (
     <html lang="ko">
