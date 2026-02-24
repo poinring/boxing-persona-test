@@ -6,7 +6,7 @@ import {
   East_Sea_Dokdo,
 } from "next/font/google";
 import Script from 'next/script';
-
+import BGMPlayer from "@/components/BGMPlayer";
 import "./globals.css";
 
 // ===== 폰트 설정 (기존 유지) =====
@@ -81,7 +81,7 @@ export default function RootLayout({
         </noscript>
 
         {children}
-
+        <BGMPlayer />
         {/* --- 3. 사운드클라우드 API 스크립트 --- */}
         <Script 
           src="https://w.soundcloud.com/player/api.js" 
@@ -91,3 +91,4 @@ export default function RootLayout({
     </html>
   );
 }
+

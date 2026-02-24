@@ -155,7 +155,7 @@ export default function QuizClient({ questions }: { questions: CsvRecord[] }) {
             </div>
 
             <div className="flex flex-col gap-4">
-              {current.choices.map((choice, index) => {
+              {current.choices.map((choice: Choice, index: number) => {
                 const isSelected = answers[currentStep] === choice.type;
                 return (
                   <button
