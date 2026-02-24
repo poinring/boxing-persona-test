@@ -15,11 +15,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!character) return { title: "결과 확인 | 복싱 성향 테스트" };
 
   return {
-    title: `${character.name_full_kr} | 복싱 성향 테스트`,
+    title: `${character.name_full_kr} | 더파이팅 복싱 성향 테스트`,
     description: character.summary_kr,
     openGraph: {
-      title: character.name_full_kr,
-      description: character.summary_kr,
+      title: `[판정] 내 주먹은 '${character.name_short_kr}'급! 필살기는 '${character.signature_move}'`,
+      description: character.quote_kr,
       images: [`/images/characters/char_${String(character.id).padStart(2, "0")}.png`],
     },
   };
