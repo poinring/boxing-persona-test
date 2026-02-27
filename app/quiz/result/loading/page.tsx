@@ -1,24 +1,39 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useLang } from "@/context/LanguageContext"; // 컨텍스트 추가
 
-const LOADING_MESSAGES = [
-  "네 놈의 주먹 무게를 측정하는 중...",
-  "기술적인 정교함을 분석하고 있다.", 
-  "무너지지 않는 멘탈의 소유자인가?",   
-  "야생의 본능이 느껴지는구먼...",      
-  "관장님이 너를 노려보고 있다..."
-];
+// 언어별 로딩 메시지 사전
+const MESSAGES_DICT = {
+  ko: [
+    "네 놈의 주먹 무게를 측정하는 중...",
+    "기술적인 정교함을 분석하고 있다.", 
+    "무너지지 않는 멘탈의 소유자인가?",   
+    "야생의 본능이 느껴지는구먼...",      
+    "관장님이 너를 노려보고 있다..."
+  ],
+  en: [
+    "Measuring the weight of your punches...",
+    "Analyzing your technical precision...",
+    "Checking your unbreakable spirit...",
+    "I can feel your wild instincts...",
+    "The Coach is watching you closely..."
+  ]
+};
 
 export default function ResultLoading() {
   const router = useRouter();
-  const [currentMsg, setCurrentMsg] = useState(LOADING_MESSAGES[0]);
+  const { lang, t } = useLang(); // 언어 상태 가져오기
+  
+  // 현재 언어에 맞는 메시지 리스트 선택
+  const currentMessages = MESSAGES_DICT[lang];
+  const [currentMsg, setCurrentMsg] = useState(currentMessages[0]);
 
   useEffect(() => {
-    // 1. 메시지 셔플 로직 (기존 유지)
+    // 1. 메시지 셔플 로직 (현재 언어 리스트 기준)
     const interval = setInterval(() => {
-      const randomMsg = LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)];
+      const randomMsg = currentMessages[Math.floor(Math.random() * currentMessages.length)];
       setCurrentMsg(randomMsg);
     }, 800);
 
@@ -27,9 +42,8 @@ export default function ResultLoading() {
     const id = searchParams.get("id");
     const s = searchParams.get("s");
 
-    // 3. 결과 페이지로 이동 (변경된 구조 적용)
+    // 3. 결과 페이지로 이동
     const timer = setTimeout(() => {
-      // 만약 데이터가 없다면 메인으로, 있다면 캐릭터 전용 결과 페이지로!
       if (id && s) {
         router.replace(`/quiz/result/${id}?s=${s}`);
       } else {
@@ -41,12 +55,12 @@ export default function ResultLoading() {
       clearInterval(interval);
       clearTimeout(timer);
     };
-  }, [router]);
+  }, [router, currentMessages]); // currentMessages가 바뀌면 인터벌 재설정
 
   return (
     <main className="min-h-screen w-full bg-[#050505] flex flex-col items-center justify-center px-6 relative overflow-hidden">
       
-      {/* --- 기존 디자인 및 애니메이션 (절대 수정 없음) --- */}
+      {/* --- 기존 디자인 및 애니메이션 (절대 유지) --- */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000_70%)] z-10" />
         <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30" />
@@ -90,19 +104,21 @@ export default function ResultLoading() {
             animate={{ opacity: 1 }}
             className="text-white/40 font-ui text-[10px] tracking-[0.5em] mb-4 uppercase"
           >
-            Analyzing your fighting spirit...
+            {t("데이터 분석 중...", "Analyzing your fighting spirit...")}
           </motion.div>
           
           <div className="h-20 flex items-center justify-center">
-            <motion.p 
-              key={currentMsg}
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="text-xl sm:text-3xl text-center text-white font-dialogue font-bold italic break-keep px-4"
-            >
-              "{currentMsg}"
-            </motion.p>
+            <AnimatePresence mode="wait">
+              <motion.p 
+                key={currentMsg}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-xl sm:text-3xl text-center text-white font-dialogue font-bold italic break-keep px-4"
+              >
+                "{currentMsg}"
+              </motion.p>
+            </AnimatePresence>
           </div>
         </div>
 
@@ -116,7 +132,7 @@ export default function ResultLoading() {
         </div>
 
         <div className="mt-6 font-title text-red-600 text-sm tracking-widest animate-pulse italic">
-          JUDGING...
+          {t("판정 중...", "JUDGING...")}
         </div>
       </div>
       <div className="absolute bottom-0 w-full h-1 bg-gradient-to-r from-blue-600 via-white to-red-600" />

@@ -7,6 +7,9 @@ import {
 } from "next/font/google";
 import Script from 'next/script';
 import BGMPlayer from "@/components/BGMPlayer";
+import LangSwitcher from "@/components/LangSwitcher";
+import { LanguageProvider } from "@/context/LanguageContext";
+import Footer from "@/components/Footer"; // 1. 푸터 임포트 추가
 import "./globals.css";
 
 // ===== 폰트 설정 (기존 유지) =====
@@ -32,7 +35,8 @@ const eastSeaDokdo = East_Sea_Dokdo({
   variable: "--font-dialogue",
 });
 
-export const metadata = {
+// ===== 메타데이터 (기존 유지) =====
+export const metadata: Metadata = {
   title: '어이, 링 위로 올라와! | 복싱 성향 테스트',
   description: '링 위에 자리 하나 남는데 네 재능이나 좀 보고 가자고.',
   openGraph: {
@@ -40,7 +44,7 @@ export const metadata = {
     description: '어이, 주먹은 폼이냐? 10초만 링 위로 올라와봐라. 네놈 재능 좀 보게.',
     images: [
       {
-        url: '/images/characters/char_og_2.png', // 업로드하신 이미지 파일명 확인 필수!
+        url: '/images/characters/char_og_2.png',
         width: 1200,
         height: 630,
         alt: '카모가와 관장님의 복싱 성향 테스트',
@@ -54,13 +58,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 전달해주신 GTM ID
   const GTM_ID = "GTM-WGXF5QLZ";
 
   return (
     <html lang="ko">
       <head>
-        {/* --- 1. Google Tag Manager (Head 영역) --- */}
         <Script id="google-tag-manager" strategy="afterInteractive">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -82,7 +84,6 @@ export default function RootLayout({
           text-white
         `}
       >
-        {/* --- 2. Google Tag Manager (noscript, Body 최상단 배치) --- */}
         <noscript>
           <iframe
             src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
@@ -92,9 +93,17 @@ export default function RootLayout({
           />
         </noscript>
 
-        {children}
-        <BGMPlayer />
-        {/* --- 3. 사운드클라우드 API 스크립트 --- */}
+        <LanguageProvider>
+          <LangSwitcher />
+          
+          {children}
+
+          {/* 2. 모든 페이지 공통 푸터 삽입 */}
+          <Footer />
+
+          <BGMPlayer />
+        </LanguageProvider>
+
         <Script 
           src="https://w.soundcloud.com/player/api.js" 
           strategy="lazyOnload" 
@@ -103,4 +112,3 @@ export default function RootLayout({
     </html>
   );
 }
-
